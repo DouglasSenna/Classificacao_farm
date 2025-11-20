@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Classificação</title>
+<style>
+ body { font-family: Arial; background:#111; color:white; margin:0; padding:20px; }
+ h1 { text-align:center; margin-bottom:20px; }
+ .card {
+   background:#222;
+   margin:3px auto;
+   padding:10px;
+   border-radius:10px;
+   max-width:500px;
+   display:flex;
+   justify-content:space-between;
+   font-size:14px;
+ }
+ .pos { font-weight:bold; color:#0f0; }
+ .nome { color:#fff; }
+ .pontos { color:#0ff; }
+ button { margin-top:20px; padding:10px 15px; background:white; color:black; border:0; border-radius:6px; cursor:pointer; display:block; margin-left:auto; margin-right:auto; }
+</style>
+</head>
+<body>
+
+<h1>Classificação Geral</h1>
+<div id="rank"></div>
+
+<script type="module">
+import { jogadores } from "./jogadores.js";
+
+let saved = localStorage.getItem("jogadores");
+if (saved) {
+  let dados = JSON.parse(saved);
+  jogadores.length = 0;
+  dados.forEach(x => jogadores.push(x));
+}
+
+let ordenado = [...jogadores].sort((a,b)=>b.pontos - a.pontos);
+
+document.getElementById("rank").innerHTML = ordenado
+  .map((j,i)=>`
+    <div class='card'>
+      <div class='pos'>#${i+1}</div>
+      <div class='nome'>${j.nome}</div>
+      <div class='pontos'>${j.pontos}</div>
+    </div>
+  `).join("");
+</script>
+
+</body>
+</html>

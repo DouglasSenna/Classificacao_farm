@@ -1,0 +1,132 @@
+<!-- index.html - CRUD com modais e localStorage + suporte para última atualização + contagem de membros --><!DOCTYPE html><html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CRUD - Pontuação</title>
+<style>
+ body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+ h1 { text-align: center; }
+ .container { max-width: 600px; margin: 0 auto; }
+ button { padding: 10px 15px; border: none; border-radius: 6px; background: black; color: white; cursor: pointer; margin-bottom: 10px; }
+ table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+ th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
+ .modal-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; }
+ .modal { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; }
+ input { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #aaa; }
+ .row-btn { display: flex; gap: 5px; justify-content: center; }
+ .info { margin-top: 10px; font-size: 14px; opacity: .6; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>CRUD - Pontuação</h1>
+<div class="info">Membros: <span id="totalMembros"></span></div>
+<div class="info">Última atualização geral: <span id="ultimaAtualizacaoGeral"></span></div><button onclick="openModal('create')">Adicionar Jogador</button> <button onclick="exportJSON()">Exportar JSON</button> <button onclick="location.href='classificacao.html'">Ver Classificação</button>
+
+<table>
+<thead>
+<tr><th>Jogador</th><th>Pontos</th><th>Última atualização</th><th>Ações</th></tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+</div><!-- Modal --><div class="modal-bg" id="modalBg">
+<div class="modal">
+<h3 id="modalTitle"></h3>
+<input type="text" id="nome" placeholder="Nome" />
+<input type="number" id="pontos" placeholder="Pontos" />
+<button onclick="salvar()">Salvar</button>
+<button onclick="closeModal()" style="background:#555;">Cancelar</button>
+</div>
+</div><script type="module">
+import { jogadores } from "./jogadores.js";
+
+let editIndex = null;
+let now = new Date().toLocaleString("pt-BR");
+
+document.getElementById("ultimaAtualizacaoGeral").innerText = now;
+
+let saved = localStorage.getItem("jogadores");
+if (saved) {
+  let dados = JSON.parse(saved);
+  jogadores.length = 0;
+  dados.forEach(x => jogadores.push(x));
+}
+
+carregar();
+
+function carregar() {
+  document.getElementById("lista").innerHTML = jogadores
+    .map(
+      (j, i) => `
+ <tr>
+   <td>${j.nome}</td>
+   <td>${j.pontos}</td>
+   <td>${j.atualizado}</td>
+   <td class='row-btn'>
+     <button onclick="openModal('update',${i})">Editar</button>
+     <button onclick="del(${i})" style='background:red;'>Del</button>
+   </td>
+ </tr>`
+    )
+    .join("");
+
+  document.getElementById("totalMembros").innerText = jogadores.length;
+  localStorage.setItem("jogadores", JSON.stringify(jogadores));
+}
+
+window.openModal = function (type, index = null) {
+  document.getElementById("modalBg").style.display = "flex";
+  editIndex = index;
+
+  if (type === "create") {
+    modalTitle.innerText = "Adicionar Jogador";
+    nome.value = "";
+    pontos.value = "";
+  }
+
+  if (type === "update") {
+    modalTitle.innerText = "Editar Jogador";
+    nome.value = jogadores[index].nome;
+    pontos.value = jogadores[index].pontos;
+  }
+};
+
+window.closeModal = function () {
+  document.getElementById("modalBg").style.display = "none";
+};
+
+window.salvar = function () {
+  let n = nome.value.trim();
+  let p = Number(pontos.value);
+  let data = new Date().toLocaleString("pt-BR");
+
+  if (!n || isNaN(p)) return alert("Dados inválidos");
+
+  if (editIndex === null) jogadores.push({ nome: n, pontos: p, atualizado: data });
+  else jogadores[editIndex] = { nome: n, pontos: p, atualizado: data };
+
+  closeModal();
+  carregar();
+};
+
+window.del = function (i) {
+  if (confirm("Excluir jogador?")) {
+    jogadores.splice(i, 1);
+    carregar();
+  }
+};
+
+window.exportJSON = function () {
+  const data = JSON.stringify(jogadores, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "jogadores.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+};
+</script></body>
+</html>
